@@ -1,0 +1,3 @@
+*.log
+switch_cursor_heartbeat.txt
+switch_cursor_stopped.flag
