@@ -5,7 +5,7 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-schtasks /create /tn "MonitorSwitchAHK" /tr "\"%~dp0start.bat\"" /sc onlogon /rl highest /f
+schtasks /create /tn "MonitorSwitchAHK" /tr "\"%~dp0MonitorSwitch.exe\"" /sc onlogon /rl highest /f
 echo.
 echo Autostart task "MonitorSwitchAHK" created.
 pause

@@ -22,7 +22,7 @@
 ## 快速开始
 
 1. 下载并解压到任意目录。
-2. 双击 `start.bat`。
+2. 双击 `MonitorSwitch.exe`（或 `start.bat`）。
 3. 首次会请求管理员权限，必须允许，否则全屏游戏内无法切出光标。
 4. 使用上面的快捷键。
 
@@ -43,6 +43,7 @@ schtasks /delete /tn MonitorSwitchAHK /f
 ## 文件说明
 
 - `AutoHotkey64.exe`：AutoHotkey v2 运行时（GPLv2）
+- `MonitorSwitch.exe`：一键启动器（自动提权，启动下面三个脚本）
 - `switch_cursor_monitor.ahk`：光标切屏 + 聚焦窗口
 - `switch_monitor.ahk`：窗口搬屏（不移动光标）
 - `switch_cursor_watchdog.ahk`：看门狗
