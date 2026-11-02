@@ -6,7 +6,7 @@
 #NoTrayIcon
 
 ; =====================================================================
-;  Ctrl+Shift+Q
+;  Win+Shift+C
 ;
 ;  把鼠标光标切到“下一台显示器”，并把该显示器最上层的窗口切到前台。
 ;
@@ -35,7 +35,7 @@ if (RUN_AS_ADMIN && !A_IsAdmin) {
 
 ; ---- 常驻脚本的可观测性 ----
 ; 保留托盘图标：能一眼看出脚本是否还在，双击可重新加载
-A_IconTip := "切换显示器：Ctrl+Shift+Q（双击这里重新加载）"
+A_IconTip := "切换显示器：Win+Shift+C（双击这里重新加载）"
 A_TrayMenu.Delete()
 A_TrayMenu.Add("重新加载", (*) => Reload())
 A_TrayMenu.Add()
@@ -104,20 +104,21 @@ Log("script loaded")
 switchQueue := []
 switchRunning := false
 
-^+q::RequestSwitch()
+#+c::RequestSwitch()
 
 ; 热键线程只负责“收请求”：校验真实修饰键、吞掉长按重复、把请求入队。
 RequestSwitch() {
     global switchQueue, switchRunning
 
     ; 防止 AHK 修饰键状态残留：以系统真实按键状态为准。
-    ctrlDown := DllCall("GetAsyncKeyState", "Short", 0x11) & 0x8000
+    winDown := (DllCall("GetAsyncKeyState", "Short", 0x5B)
+        | DllCall("GetAsyncKeyState", "Short", 0x5C)) & 0x8000
     shiftDown := DllCall("GetAsyncKeyState", "Short", 0x10) & 0x8000
-    if (!ctrlDown || !shiftDown)
+    if (!winDown || !shiftDown)
         return
 
-    ; 等物理 Q 松开：长按产生的自动重复会被吞掉，每次真实按键只入队一次。
-    KeyWait "q"
+    ; 等物理 C 松开：长按产生的自动重复会被吞掉，每次真实按键只入队一次。
+    KeyWait "c"
 
     Critical
     switchQueue.Push(true)
@@ -198,9 +199,10 @@ PerformSwitch() {
     leavingFullscreen := foregroundBefore && IsFullscreenWindow(foregroundBefore)
 
     ; 全屏游戏会持续锁光标/抢前台，先 Alt+Tab 让出焦点，再移动光标。
-    ; 等物理 Ctrl/Shift 松开，避免 Alt+Tab 被识别成 Ctrl+Alt+Tab。
+    ; 等物理 Win/Shift 松开，避免 Alt+Tab 被识别成 Win+Shift+Alt+Tab。
     if (leavingFullscreen) {
-        KeyWait "Ctrl", "T0.6"
+        KeyWait "LWin", "T0.6"
+        KeyWait "RWin", "T0.4"
         KeyWait "Shift", "T0.6"
         Sleep 30
         SendInput("!{Tab}")
