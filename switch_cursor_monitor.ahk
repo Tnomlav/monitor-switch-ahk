@@ -101,21 +101,57 @@ Log(text) {
 
 Log("script loaded")
 
-^+q::SwitchCursorToNextMonitor()
+switchQueue := []
+switchRunning := false
 
-SwitchCursorToNextMonitor() {
+^+q::RequestSwitch()
+
+; 热键线程只负责“收请求”：校验真实修饰键、吞掉长按重复、把请求入队。
+RequestSwitch() {
+    global switchQueue, switchRunning
+
     ; 防止 AHK 修饰键状态残留：以系统真实按键状态为准。
-    ; 没有物理按住 Ctrl 和 Shift 时，直接忽略这次触发。
     ctrlDown := DllCall("GetAsyncKeyState", "Short", 0x11) & 0x8000
     shiftDown := DllCall("GetAsyncKeyState", "Short", 0x10) & 0x8000
     if (!ctrlDown || !shiftDown)
         return
 
-    ; 长按时 Windows 会连发 key-down，这里做去抖，避免“一直触发”
-    static lastTick := 0
-    if (A_TickCount - lastTick < 250)
+    ; 等物理 Q 松开：长按产生的自动重复会被吞掉，每次真实按键只入队一次。
+    KeyWait "q"
+
+    Critical
+    switchQueue.Push(true)
+    if (!switchRunning) {
+        switchRunning := true
+        SetTimer(ProcessQueue, -10)
+    }
+    Critical "Off"
+}
+
+; 队列消费者：一次处理一个请求，快速连按会依次执行而不是被丢弃。
+ProcessQueue() {
+    global switchQueue, switchRunning
+
+    Critical
+    if (!switchQueue.Length) {
+        switchRunning := false
+        Critical "Off"
         return
-    lastTick := A_TickCount
+    }
+    switchQueue.RemoveAt(1)
+    Critical "Off"
+
+    PerformSwitch()
+
+    Critical
+    if (switchQueue.Length)
+        SetTimer(ProcessQueue, -50)
+    else
+        switchRunning := false
+    Critical "Off"
+}
+
+PerformSwitch() {
 
     ; 多屏缩放比例不同时按物理像素取坐标，避免光标落点偏移
     try DllCall("SetThreadDpiAwarenessContext", "Ptr", -4)  ; PER_MONITOR_AWARE_V2
